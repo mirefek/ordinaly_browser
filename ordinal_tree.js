@@ -362,13 +362,11 @@ window.onload = function() {
 		Ordinal.omega1.pow(Ordinal.omega1.succ())))
 	yield Ordinal.psi0(
 	    Ordinal.aleph(Ordinal.two).add(
-		Ordinal.omega1.pow(Ordinal.omega1.powN(2))))
-	yield Ordinal.psi0(
-	    Ordinal.aleph(Ordinal.two).add(
 		Ordinal.omega1.pow(Ordinal.omega1.pow(Ordinal.omega))))
 	yield Ordinal.psi0(
 	    Ordinal.aleph(Ordinal.two).add(
 		Ordinal.omega1.pow(Ordinal.omega1.pow(Ordinal.omega1))))
+	yield Ordinal.psi0(Ordinal.aleph(Ordinal.two).mulN(2))
 	yield Ordinal.psi0(Ordinal.aleph(Ordinal.omega))
 	yield Ordinal.psi0(Ordinal.aleph(Ordinal.psi0(Ordinal.omega1.pow(Ordinal.omega1))))
 	yield Ordinal.psi0(Ordinal.aleph(Ordinal.omega1))
