@@ -22,6 +22,10 @@ html, body {
   text-align: center;
 }
 
+.goal {
+    font-size: 2vw;
+}
+
 .content {
   display: flex;
   flex: 1;

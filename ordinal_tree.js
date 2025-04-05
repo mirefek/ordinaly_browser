@@ -145,8 +145,16 @@ class OrdinalTree {
 	this.goalDom = document.getElementById("goal")
 
 	this.goalIt = goalIt
+	this.level = loadLevel()
+	this.mustReach = Ordinal.zero
+	for (var i = 0; i < this.level; i++) {
+	    const goal = this.goalIt.next()
+	    if (!goal.done && goal.value.cmp(this.mustReach) > 0)
+		this.mustReach = goal.value
+	}
 	this.updateGoal()
-	this.mustReach = this.goal
+	if (this.goal !== null && this.goal.cmp(this.mustReach) > 0)
+	    this.mustReach = this.goal
 
 	const ord = this.extensionIt.next().value
 	this.curNode = new OrdinalTreeNode(Ordinal.zero, [], ord, this)
@@ -291,7 +299,8 @@ class OrdinalTree {
 	    this.goalReached()
     }
     goalReached() {
-	this.goalIndex += 1
+	this.level += 1
+	saveLevel(this.level)
 	this.updateGoal()
 	this.updateMustReach(this.goal)
     }
@@ -517,11 +526,13 @@ function* goals() {
     yield psi0(psi(one, omega1.add(psi0(omega1.mulN(2)))).add(psi0(psi(one, omega1.add(psi0(omega1.mulN(2)))).add(psi0(omega1.mulN(6))))))
     yield psi0(psi(one, omega1).mulN(6).add(omega1))
     yield psi0(psi(one, omega1.mulN(4)).add(psi(one, omega1.mulN(3))).add(psi(one, omega1.mulN(2))))
+    yield psi0(psi(one, psi(one, psi0(one)).add(psi0(omega1.mulN(6)))).add(psi(one, psi(one, one).add(psi0(psi(one, psi(one, psi0(one)).add(psi0(omega1.mulN(6)))).add(psi0(psi(one, omega1).mulN(43))))))))
+    yield psi0(psi(one, psi(one, psi0(omega1.mulN(4).add(psi0(omega1.mulN(4)))))).add(psi(one, psi(one, psi0(omega1.mulN(4).add(psi0(omega1.mulN(3))))).add(psi0(psi(one, psi(one, psi0(omega1.mulN(4).add(psi0(omega1.mulN(4)))))).add(psi(one, psi(one, psi0(omega1.mulN(3).add(psi0(omega1.mulN(3))))).add(psi0(psi(one, psi(one, psi0(omega1.mulN(4).add(psi0(omega1.mulN(4))))))).mulN(2)))))))))
+    yield psi0(psi(one, psi(one, psi0(psi(one, psi0(omega1.mulN(4)))))).mulN(5).add(psi(one, psi(one, psi0(omega1.mulN(8))).add(psi0(psi(one, psi(one, psi0(psi(one, psi0(omega1.mulN(4)))))).mulN(5).add(psi(one, omega1.mulN(9).add(psi0(psi(one, psi(one, psi0(psi(one, psi0(omega1.mulN(4)))))).mulN(5).add(psi0(psi(one, omega1).mulN(3))))))))))).add(psi(one, psi0(psi(one, psi(one, psi0(omega1.mulN(11)))).mulN(6)))))
 }
 
 var tree = null
 window.onload = function() {
-    
     tree = new OrdinalTree(extensions(), goals())
     window.addEventListener("keydown", (event) => {
 	// console.log(event)
