@@ -69,8 +69,6 @@ class OrdinalTreeNode {
 	inside.innerHTML = this.getOrdinal(i).toHtml(this.tree.displayConfig)
 	row.replaceChildren(inside)
 
-	console.log("row: "+row.offsetWidth)
-	console.log("inside: "+inside.offsetWidth)
 	var size = (row.offsetWidth-50)/inside.offsetWidth
 	if (size > 2) size = 2
 	inside.style.fontSize = size + "vw"
@@ -120,7 +118,7 @@ class OrdinalTree {
 	const configs = [
 	    "one", "omega", "omega1", "cardinals",
 	    "omegaPow", "power",
-	    "epsilon", "zeta", "veblen", "gamma", "basicPsi"
+	    "epsilon", "zeta", "veblen0", "gamma", "veblen1", "veblen2", "basicPsi"
 	]
 
 	this.displayConfig = {}
@@ -195,7 +193,10 @@ class OrdinalTree {
 	}
     }
     getNextNode() {
-	return this.curNode.getSubnode(this.curIndex)
+	if (this.nextOrdinal().isLimit())
+	    return this.curNode.getSubnode(this.curIndex)
+	else
+	    return null
     }
 
     buildRightColumn() {
@@ -343,7 +344,7 @@ window.onload = function() {
 	yield Ordinal.veblen(Ordinal.omega, Ordinal.zero)
 	yield Ordinal.veblen(Ordinal.epsilon0, Ordinal.zero)
 	yield Ordinal.veblen(Ordinal.veblen(Ordinal.two, Ordinal.zero), Ordinal.zero)
-	yield Ordinal.psi0(Ordinal.omega1.pow(Ordinal.omega1))
+	yield Ordinal.gamma0
 	yield Ordinal.psi0(Ordinal.omega1.pow(Ordinal.omega1).mulN(2))
 	yield Ordinal.psi0(Ordinal.omega1.pow(Ordinal.omega1).mul(Ordinal.omega))
 	yield Ordinal.psi0(Ordinal.omega1.pow(Ordinal.omega1).mul(Ordinal.epsilon0))
@@ -352,7 +353,22 @@ window.onload = function() {
 	yield Ordinal.psi0(Ordinal.omega1.pow(Ordinal.omega1.mul(Ordinal.omega)))
 	yield Ordinal.psi0(Ordinal.omega1.pow(Ordinal.omega1.powN(2)))
 	yield Ordinal.psi0(Ordinal.omega1.pow(Ordinal.omega1.pow(Ordinal.omega)))
+	yield Ordinal.psi0(Ordinal.omega1.pow(Ordinal.omega1.pow(Ordinal.epsilon0)))
+	yield Ordinal.psi0(Ordinal.omega1.pow(Ordinal.omega1.pow(Ordinal.gamma0)))
+	yield Ordinal.psi0(Ordinal.omega1.pow(Ordinal.omega1.pow(Ordinal.omega1)))
 	yield Ordinal.psi0(Ordinal.aleph(Ordinal.two))
+	yield Ordinal.psi0(
+	    Ordinal.aleph(Ordinal.two).add(
+		Ordinal.omega1.pow(Ordinal.omega1.succ())))
+	yield Ordinal.psi0(
+	    Ordinal.aleph(Ordinal.two).add(
+		Ordinal.omega1.pow(Ordinal.omega1.powN(2))))
+	yield Ordinal.psi0(
+	    Ordinal.aleph(Ordinal.two).add(
+		Ordinal.omega1.pow(Ordinal.omega1.pow(Ordinal.omega))))
+	yield Ordinal.psi0(
+	    Ordinal.aleph(Ordinal.two).add(
+		Ordinal.omega1.pow(Ordinal.omega1.pow(Ordinal.omega1))))
 	yield Ordinal.psi0(Ordinal.aleph(Ordinal.omega))
 	yield Ordinal.psi0(Ordinal.aleph(Ordinal.psi0(Ordinal.omega1.pow(Ordinal.omega1))))
 	yield Ordinal.psi0(Ordinal.aleph(Ordinal.omega1))
