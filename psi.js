@@ -376,6 +376,9 @@ class Ordinal {
 	}
 	return new Ordinal(monoms)
     }
+    addN(n) {
+	return this.add(Ordinal.fromInt(n))
+    }
 
     // ordinal res such that other + res = this
     subLeft(other) {
@@ -506,7 +509,7 @@ class Ordinal {
     }
     // ordinal multiplication a * b
     mul(b) {
-	if (this.isZero() || b.isZero()) return 0
+	if (this.isZero() || b.isZero()) return Ordinal.zero
 	if (this.isOne()) return b
 	if (b.isOne()) return this
 	if (this.m.length > 1 || this.m[0].mul > 1) {
@@ -530,9 +533,16 @@ class Ordinal {
 	}))
     }
 
-    // natural power alpha ^ n, simply as iterated multiplication
+    // natural power alpha ^ n
     powN(n) {
 	if (n == 0) return Ordinal.one
+	else if (n == 1) return this
+	else if (this.m.length == 1) {
+	    if (this.firstM().mul == 1)
+		return this.omegaLog().mulN(n).omegaPow()
+	    else
+		return this.getFirst().omegaLog().mulN(n).omegaPow().mulN(this.firstM().mul)
+	}
 	else {
 	    var res = this
 	    for (var i = 1; i < n; i++) res = res.mul(this)
@@ -685,7 +695,7 @@ class Ordinal {
     //   {arg_index, arg}, where arg_indices come in a decreasing order
     // if the only arg_indices are (1,0), then it is the ordinary veblen functionz8
     // if not possible (either a sum, or the last index would equal this), returns null
-    veblenDecomposeNew() {
+    veblenDecompose() {
 	const veblenCollapse = this.veblenCollapseDecompose()
 	if (veblenCollapse === null) return null
 	const [indexCollapse, argPhi] = veblenCollapse
@@ -731,70 +741,50 @@ class Ordinal {
 	return res
     }
 
-    // possible return:
-    // * { "type": "composite" } -- this is a sum of multiple values
-    // * { "type": "veblen", "index": Ordinal, "arg": Ordinal }
-    //   this = phi_index(arg), where phi_index is defined by
-    //   * phi_0(alpha) = omega^alpha
-    //   * phi_i(alpha) is the alpha'th fixpoint
-    //        of all previous functions psi_j for j < i
-    // * { "type" = "Gamma", "index": Ordinal }
-    //   this = index'th ordinal such that psi_x(x) = x
-    // * { "type" = "Gamma-fix", "index": Ordinal }
-    //   this = index = Gamma_this
-
-    veblenDecompose() {
-	const res = this.veblenDecomposeMain()
-	if (res === null) return { "type": "composite" }
-	else {
-	    const fixOutput = {
-		"type": "Gamma-fix",
-		"index": this,
-	    }
-	    const [indexPhi, argPhi] = res
-	    const card = this.firstM().card.succ()
-	    const gammaIndex = Ordinal.aleph(card)
-	    const cmp = indexPhi.cmp(gammaIndex)
-	    if (cmp < 0) {
-		if (this.cmp(indexPhi) <= 0 || this.cmp(argPhi) <= 0) {
-		    console.warn("Veblen decomposition didn't decrease: "+this+" -> "+indexPhi+", "+argPhi)
-		    return fixOutput
-		}
-		return {
-		    "type" : "veblen",
-		    "index": indexPhi,
-		    "arg": argPhi
-		}
-	    }
-	    else if (cmp == 0) {
-		if (this.cmp(argPhi) <= 0) {
-		    console.warn("Veblen decomposition didn't decrease: "+this+" -> "+indexPhi+", "+argPhi)
-		    return fixOutput
-		}
-		return {
-		    "type": "Gamma",
-		    "index": argPhi,
-		}
-	    }
-	    else return fixOutput
-	}
-    }
-
-    static veblen(index, arg) {
+    // TODO, doesn't work on psi(1,1,psi0(omega2))
+    static veblenCollapse(card, index, arg) {
 	if (index.isZero()) return arg.omegaPow()
-	var card = index.card().max(arg.card())
+	card = card.max(arg.card())
 	const aleph = Ordinal.aleph(card.succ())
 	const [big, small] = arg.firstM().arg.split(aleph.pow(index.succ()))
-
 	var psiArg = aleph.pow(index).mul(Ordinal.two.add(arg))
 	if (small.isZero()) psiArg = psiArg.dropFirst()
 	return Ordinal.psiRaw(card, big.join(psiArg))
+    }
+    static veblen(...args) {
+	var card = Ordinal.zero
+	for (const arg of args)
+	    card = card.max(arg.card())
+	var mainArg
+	if (args.length == 0) mainArg = Ordinal.zero
+	else mainArg = args.pop()
+
+	const aleph = Ordinal.aleph(card.succ())
+	// build index as a polynomial with base "aleph"
+	args.reverse()
+	const summands = []
+	for (const [i, coef] of args.entries())
+	    summands.push(aleph.powN(i).mul(coef))
+	summands.reverse()
+	const monoms = []
+	for (const summand of summands) {
+	    monoms.push(...summand.m)
+	}
+	const index = new Ordinal(monoms)
+ 	return Ordinal.veblenCollapse(card, index, mainArg)
     }
     epsilon() {
 	return Ordinal.veblen(Ordinal.one, this)
     }
     static epsilon0 = Ordinal.zero.epsilon()
-    static gamma0 = Ordinal.psi0(Ordinal.omega1.pow(Ordinal.omega1))
+    zeta() {
+	return Ordinal.veblen(Ordinal.two, this)
+    }
+    static zeta0 = Ordinal.zero.zeta()
+    gamma() {
+	return Ordinal.veblen(Ordinal.one, Ordinal.zero, this)
+    }
+    static gamma0 = Ordinal.zero.gamma()
 
     // the basic psi function cannot use higher order psi's, only addition
     // multiplication, exponentation, and Omega, so its limit is the
@@ -839,6 +829,41 @@ class Ordinal {
 	else return this.m.map(Ordinal.monomToString).join(" + ")
     }
 
+    static monomToCode(monom) {
+	var base
+	if (monom.arg.isZero()) {
+	    if (monom.card.isZero()) {
+		if (monom.mul == 1) return "one"
+		else if (monom.mul == 2) return "two"
+		else return "fromInt("+monom.mul+")"
+	    }
+	    else if(monom.card.isOne()) base = "omega1"
+	    else base = "aleph("+monom.card.toCode()+")"
+	}
+	else if (monom.card.isOne() && monom.arg.isZero())
+	    base = "omega"
+	else {
+	    if (monom.card.isZero()) base = "psi0("+monom.arg.toCode()+")"
+	    else if (monom.card.isZero()) base = "psi1("+monom.arg.toCode()+")"
+	    else base = "psi("+monom.card.toCode()+", "+monom.arg.toCode()+")"
+	}
+	if (monom.mul == 1) return base
+	else return base+".mulN("+monom.mul+")"
+    }
+    toCode() {
+	if (this.isZero()) return "zero"
+	var res
+	const parts = [Ordinal.monomToCode(this.firstM())]
+	for (const monom of this.m.slice(1)) {
+	    if (monom.card.isZero() && monom.arg.isZero()) {
+		if (monom.mul == 1) parts.push(".succ()")
+		else parts.push(".addN("+monom.mul+")")
+	    }
+	    else parts.push(".add("+Ordinal.monomToCode(monom)+")")
+	}
+	return parts.join("")
+    }
+
     static monom1ToHtml(m, config) {
 	if (m.card.isZero() && m.arg.isZero() && config.one) return "1"
 
@@ -872,7 +897,7 @@ class Ordinal {
 
 	if (config.epsilon || config.zeta || config.veblen0 || config.gamma || config.veblen1 || config.veblen2) {
 	    // try to express using veblen function
-	    const veblen = ord.veblenDecomposeNew()
+	    const veblen = ord.veblenDecompose()
 	    if (veblen !== null) {
 		if (config.epsilon || config.zeta || config.veblen0 || config.gamma || config.veblen1)
 		    if (veblen.length == 0 || veblen[0][0].isFinite()) {
