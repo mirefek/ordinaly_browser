@@ -291,8 +291,10 @@ class OrdinalTree {
 	    this.goal = iterOutput.value
 	if (this.goal === null)
 	    this.goalDom.innerHTML = "Congratulations, you found all the ordinals in this game!"
-	else
-	    this.goalDom.innerHTML = "Goal "+(this.level+1)+": "+this.goal.toHtml(this.configAllTrue)
+	else {
+	    const displayConfig = this.goal.displayConfig || this.configAllTrue
+	    this.goalDom.innerHTML = "Goal "+(this.level+1)+": "+this.goal.toHtml(displayConfig)
+	}
     }
     checkGoal() {
 	if (this.goal !== null && this.curOrdinal().cmp(this.goal) == 0)
@@ -458,7 +460,7 @@ function* extensions() {
     yield epsilon0.gamma()
     yield gamma0.gamma()
     yield veblen(one, one, zero)
-    yield veblen(omega, one, zero)
+    yield veblen(omega, zero, zero)
     yield veblen(one, zero, zero, zero)
     yield veblenCol(zero, omega1.pow(omega), zero)
     yield veblenCol(zero, omega1.pow(epsilon0), zero)
@@ -495,6 +497,8 @@ function* goals() {
     const veblen = Ordinal.veblen
     const veblenCol = Ordinal.veblenCollapse
     const aleph = Ordinal.aleph
+    var res
+    var displayConfig
 
     yield fromInt(42)
     yield omega.addN(5)
@@ -529,6 +533,28 @@ function* goals() {
     yield psi0(psi(one, psi(one, psi0(one)).add(psi0(omega1.mulN(6)))).add(psi(one, psi(one, one).add(psi0(psi(one, psi(one, psi0(one)).add(psi0(omega1.mulN(6)))).add(psi0(psi(one, omega1).mulN(43))))))))
     yield psi0(psi(one, psi(one, psi0(omega1.mulN(4).add(psi0(omega1.mulN(4)))))).add(psi(one, psi(one, psi0(omega1.mulN(4).add(psi0(omega1.mulN(3))))).add(psi0(psi(one, psi(one, psi0(omega1.mulN(4).add(psi0(omega1.mulN(4)))))).add(psi(one, psi(one, psi0(omega1.mulN(3).add(psi0(omega1.mulN(3))))).add(psi0(psi(one, psi(one, psi0(omega1.mulN(4).add(psi0(omega1.mulN(4))))))).mulN(2)))))))))
     yield psi0(psi(one, psi(one, psi0(psi(one, psi0(omega1.mulN(4)))))).mulN(5).add(psi(one, psi(one, psi0(omega1.mulN(8))).add(psi0(psi(one, psi(one, psi0(psi(one, psi0(omega1.mulN(4)))))).mulN(5).add(psi(one, omega1.mulN(9).add(psi0(psi(one, psi(one, psi0(psi(one, psi0(omega1.mulN(4)))))).mulN(5).add(psi0(psi(one, omega1).mulN(3))))))))))).add(psi(one, psi0(psi(one, psi(one, psi0(omega1.mulN(11)))).mulN(6)))))
+    yield psi0(psi(one, psi(one, psi0(psi(one, psi(one, psi0(psi(one, omega1.mulN(2)).mulN(5)))).mulN(6)))).mulN(7))
+    yield psi0(psi(one, psi(one, omega1)).add(psi(one, psi(one, psi0(psi(one, psi(one, omega1)).add(psi(one, psi(one, psi0(psi(one, psi(one, omega1)))).add(psi0(psi(one, psi(one, omega1)))))))).add(psi0(psi(one, psi(one, omega1)))))))
+    yield psi0(psi(one, psi(one, omega1)).mulN(6).add(psi(one, psi(one, psi0(psi(one, psi(one, omega1)).mulN(4))).add(psi0(psi(one, psi(one, omega1)).mulN(6).add(psi(one, psi(one, psi0(psi(one, psi(one, omega1)).mulN(3))).add(psi0(psi(one, psi(one, omega1)).mulN(6)).mulN(2)))).add(psi(one, psi(one, psi0(psi(one, psi(one, omega1)).mulN(2))).add(psi0(psi(one, psi(one, omega1)).mulN(6).add(psi(one, psi(one, psi0(psi(one, psi(one, omega1)).mulN(3))).add(psi0(psi(one, psi(one, omega1)).mulN(6)).mulN(2))))).mulN(4)))))))))
+    yield psi0(psi(one, psi(one, omega1).add(psi0(psi0(one)))).add(psi(one, psi(one, psi0(psi(one, psi(one, omega1).add(psi0(psi0(one)))).add(psi(one, psi(one, psi0(psi(one, psi(one, omega1).add(psi0(psi0(one)))))).add(psi0(psi(one, psi(one, omega1).add(psi0(one))))))))).add(psi0(psi(one, psi(one, omega1).add(psi0(psi0(one)))))))))
+    yield psi0(psi(one, psi(one, omega1).add(psi0(psi(one, psi(one, psi0(psi(one, psi(one, one)).mulN(2)))).mulN(2)))).add(psi0(psi(one, psi(one, omega1).add(psi0(psi(one, psi(one, one)).mulN(2)))).add(psi(one, psi(one, psi0(psi(one, psi(one, omega1).add(psi0(psi(one, psi(one, one)).mulN(2)))))))))).add(psi0(psi(one, psi(one, omega1).succ()).add(psi(one, psi(one, psi0(psi(one, psi(one, omega1).succ()).add(psi(one, psi(one, psi0(psi(one, psi(one, omega1).succ())))))))).mulN(2)))))
+    yield psi0(psi(one, psi(one, omega1).add(psi0(psi(one, psi(one, omega1).add(psi0(psi(one, psi(one, one)).mulN(2))))))).add(psi0(psi(one, psi(one, omega1).add(psi0(psi(one, psi(one, omega1).succ()).add(psi(one, psi(one, psi0(psi(one, psi(one, omega1).succ())))))))))).add(psi0(psi(one, psi(one, omega1).add(psi0(psi(one, psi(one, omega1).succ())))).add(psi(one, psi(one, psi0(psi(one, psi(one, omega1).add(psi0(psi(one, psi(one, omega1).succ())))))))))))
+    yield psi0(psi(one, psi(one, omega1).mulN(2).add(psi(one, psi0(psi(one, psi(one, omega1).add(psi0(omega1.mulN(4))))))).add(psi0(psi(one, psi(one, omega1).add(psi0(psi(one, omega1).mulN(6))))))))
+    yield psi0(psi(one, psi(one, omega1.add(psi0(psi(one, psi(one, omega1).add(psi0(psi(one, psi(one, omega1)))))))).add(psi(one, psi0(psi(one, psi(one, omega1).add(psi0(psi(one, psi(one, omega1).add(psi0(psi(one, psi(one, omega1))))))))))).add(psi0(psi(one, psi(one, omega1).add(psi0(psi(one, psi(one, omega1).add(psi0(psi(one, psi(one, omega1).add(psi0(psi(one, psi(one, omega1)))))))))))))))
+    yield psi0(psi(one, psi(one, omega1.mulN(4)).add(psi(one, omega1.mulN(3).succ())).add(psi(one, omega1.mulN(2).add(psi0(one)))).add(psi(one, omega1.add(psi0(omega1)))).add(psi(one, psi0(psi(one, omega1)))).add(psi0(psi(one, psi(one, omega1))))))
+    yield psi0(psi(one, psi(one, psi(one, psi0(psi0(one))).add(psi0(psi0(one)))).add(psi(one, psi(one, psi0(one)).add(psi0(one)))).add(psi(one, psi(one, one).succ()))))
+    yield psi0(psi(one, psi(one, psi(one, psi0(psi(one, omega1))).add(psi0(omega1.mulN(2)))).add(psi(one, psi(one, psi0(omega1.mulN(2))).add(psi0(psi(one, psi(one, omega1)).mulN(3)))))))
+    yield psi0(psi(one, psi(one, psi(one, psi0(psi(one, psi(one, psi(one, psi0(psi(one, psi(one, omega1)))).add(psi0(psi(one, psi(one, omega1)).mulN(2))))))).add(psi0(psi(one, psi(one, omega1)).mulN(3)))).add(psi(one, psi(one, psi0(psi(one, psi(one, omega1)).mulN(3))).add(psi0(psi(one, psi(one, psi(one, psi0(psi(one, psi(one, omega1)).mulN(2))).add(psi0(psi(one, psi(one, omega1))))))))))))
+    displayConfig = {
+	"one": true,
+	"omega": true,
+	"omega1": true,
+	"power": true,
+	"basicPsi": true,
+    }
+    res = psi0(psi(one, psi(one, psi(one, omega1))).add(psi(one, omega1)).add(psi(one, psi0(psi(one, psi(one, psi(one, omega1)))))).add(psi(one, psi0(psi(one, omega1)))))
+    res.displayConfig = displayConfig
+    yield res
 }
 
 var tree = null
