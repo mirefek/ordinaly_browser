@@ -292,7 +292,7 @@ class OrdinalTree {
 	if (this.goal === null)
 	    this.goalDom.innerHTML = "Congratulations, you found all the ordinals in this game!"
 	else
-	    this.goalDom.innerHTML = "Goal: "+this.goal.toHtml(this.configAllTrue)
+	    this.goalDom.innerHTML = "Goal "+(this.level+1)+": "+this.goal.toHtml(this.configAllTrue)
     }
     checkGoal() {
 	if (this.goal !== null && this.curOrdinal().cmp(this.goal) == 0)
