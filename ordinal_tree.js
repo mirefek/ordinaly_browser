@@ -153,7 +153,9 @@ class OrdinalTree {
 		this.mustReach = goal.value
 	}
 	this.updateGoal()
-	if (this.goal !== null && this.goal.cmp(this.mustReach) > 0)
+	if (this.goal === null)
+	    this.mustReach = null
+	else if (this.goal.cmp(this.mustReach) > 0)
 	    this.mustReach = this.goal
 
 	const ord = this.extensionIt.next().value
