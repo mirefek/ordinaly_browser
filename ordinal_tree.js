@@ -85,7 +85,7 @@ class OrdinalTreeNode {
 	this.columnContent.classList.add("column-content")
 	this.footer = document.createElement("div")
 	this.footer.classList.add("column-footer")
-	if (this.locked()) this.footer.innerHTML = "???"
+	if (this.locked()) this.footer.innerHTML = "🔒"
 	else this.footer.innerHTML = this.end.toHtml(this.tree.displayConfig)
 	column.replaceChildren(this.columnContent, this.footer)
 	return column
@@ -553,7 +553,8 @@ window.onload = function() {
 	    event.preventDefault()
 	}
 	if (event.key == "s") {
-	    if (tree.goal !== null) {
+	    // allow level skipping only on a local filesystem
+	    if (window.location.protocol == "file:" && tree.goal !== null) {
 		console.log("Skipping a goal")
 		tree.goalReached()
 	    }

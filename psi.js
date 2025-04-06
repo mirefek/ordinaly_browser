@@ -741,7 +741,7 @@ class Ordinal {
 	return res
     }
 
-    // TODO, doesn't work on psi(1,1,psi0(omega2))
+    // TODO, bug: doesn't work on phi(1,1,psi0(omega2))
     static veblenCollapse(card, index, arg) {
 	if (index.isZero()) return arg.omegaPow()
 	card = card.max(arg.card())
