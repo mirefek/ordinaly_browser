@@ -378,11 +378,22 @@ class OrdinalTree {
 	this.fwStack.push(this.curIndex)
 	this.ensurePrevNode();
 	[this.curNode, this.curIndex] = this.bwStack.pop() // this.bwStack.pop()
-
+	
 	this.mainDom.children[2].remove()
 	this.mainDom.insertBefore(this.buildLeftColumn(), this.mainDom.children[0])
 	this.fillLeftColumn()
 	this.highlightSelection()
+
+	for(const children of this.mainDom.children)
+	{
+	    console.log(children);
+	    children.classList.remove("animate-left");
+	    children.classList.remove("animate-right");
+
+	    children.offsetWidth; // Vypada nahodne, ale je potřeba na reflow DOM
+
+	    children.classList.add("animate-left")
+	}
     }
     moveRight() {
 	if (this.getNextNode() === null) return
@@ -398,11 +409,22 @@ class OrdinalTree {
 	else
 	    this.curIndex = 0
 	this.checkGoal()
-
+	
 	this.mainDom.children[0].remove()
 	this.mainDom.appendChild(this.buildRightColumn())
 	this.fillRightColumn()
 	this.highlightSelection()
+	
+	for(const children of this.mainDom.children)
+	{
+	    console.log(children);
+	    children.classList.remove("animate-left");
+	    children.classList.remove("animate-right");
+
+	    children.offsetWidth; // Vypada nahodne, ale je potřeba na reflow DOM
+
+	    children.classList.add("animate-right")
+	}
     }
     activate(node, index) {
 	if (node === this.curNode) {
