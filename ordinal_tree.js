@@ -20,7 +20,7 @@ class OrdinalTreeNode {
     }
     getOrdinal(index) {
 	if (!(index >= 0)) {
-	    console.warn("Ordinal sequence is only indexed by positive integers, got: "+index)
+	    console.warn("Ordinal sequence is only indexed by non-negative integers, got: "+index)
 	    return null
 	}
 	while (index >= this.ordinals.length)
@@ -386,7 +386,7 @@ class OrdinalTree {
 
 	for(const children of this.mainDom.children)
 	{
-	    console.log(children);
+	    // console.log(children);
 	    children.classList.remove("animate-left");
 	    children.classList.remove("animate-right");
 
@@ -417,7 +417,7 @@ class OrdinalTree {
 	
 	for(const children of this.mainDom.children)
 	{
-	    console.log(children);
+	    // console.log(children);
 	    children.classList.remove("animate-left");
 	    children.classList.remove("animate-right");
 

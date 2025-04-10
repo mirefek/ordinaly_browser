@@ -339,7 +339,8 @@ class Ordinal {
     }
 
     max(other) {
-	if (this.cmp(other) > 0) return this
+	if (other === null) return this
+	else if (this.cmp(other) > 0) return this
 	else return other
     }
 
@@ -414,11 +415,26 @@ class Ordinal {
 	for (var m of this.m) {
 	    const cardCmp = m.card.cmp(cardBound)
 	    if (cardCmp < 0) continue
-	    if (m.arg.cmp(argBound) > 0) return false
+	    if (m.arg.cmp(argBound) >= 0) return false
 	    if (!m.card.validArgs(cardBound, argBound)) return false
 	    if (cardCmp != 0 && !m.arg.validArgs(cardBound, argBound)) return false
 	}
 	return true
+    }
+    // assuming this is in the normal form, finds the biggest alpha such that
+    //   this not in C_card(alpha)
+    //   in case this in C_card(0), then returns null (i.e. this < Omega_card)
+    maxArg(card) {
+	var res = null
+	for (var m of this.m) {
+	    const cardCmp = m.card.cmp(card)
+	    if (cardCmp < 0) continue
+	    if (res === null || m.arg.cmp(res) > 0) res = m.arg
+	    res = res.max(m.card.maxArg(card))
+	    // optimization skip if cardCmp == 0
+	    if (cardCmp != 0) res = res.max(m.arg.maxArg(card))
+	}
+	return res
     }
     isNormalForm() {
 	for (var m of this.m) {
@@ -428,7 +444,9 @@ class Ordinal {
 	    if (!m.card.isNormalForm()) { console.log('B'); return false }
 	    if (!m.arg.isNormalForm()) { console.log('C'); return false }
 	    // check that only valid arguments are used
-	    if (!m.arg.validArgs(m.card, m.arg)) { console.log('D'); return false }
+	    // if (!m.arg.validArgs(m.card, m.arg)) { console.log('D'); return false }
+	    const maxArg = m.arg.maxArg(m.card)
+	    if (maxArg !== null && maxArg.cmp(m.arg) >= 0) { console.log('D'); return false }
 	}
 	// check strictly decreasing monomials
 	for (var i = 0; i < this.m.length-1; i++) {
@@ -623,109 +641,29 @@ class Ordinal {
 	return [base, Ordinal.one.add(expMain), expRest.omegaPow()]
     }
 
-    //  Veblen Hierarchy
-    //------------------------
-
-    // Decomposes this into phi_i(x), where phi is the collapsing veblen function
-    // defined by
-    //   * phi_0(alpha) = omega^alpha
-    //   * phi_i(alpha) is the alpha'th fixpoint
-    //        of all previous functions psi_j for j < i
-    //        where j in C_card(i)
-    // 
-    // returns an array [i,x] with i as high as possible, or null if not possible
-
-    veblenCollapseDecompose() {
-	if (this.m.length != 1) return null
-	const m = this.m[0]
-	if (m.mul != 1) return null
-	if (m.arg.isZero()) return null
-
-	// index = 0 is just the omega logarithm
-	if ((m.card.isZero() && m.arg.isZero()) ||
-	    m.arg.lastM().card.cmp(m.card) <= 0) return [Ordinal.zero, this.omegaLog()]
-
-	// In fact, we read index by:
-	//   this = psi_i(aleph_(i+1) ^ resIndex * factor)
-	// i.e. the last summand is
-	//   this = psi_i( ... + aleph_(i+1) ^ resIndex * x0)
-	//        = psi_i( ... + omega ^ (aleph_(i+1) * resIndex + x0))
-	// after this factorization, the 'factor' can be split into 'big' and 'small' parts,
-	// where small means smaller than aleph_(i+1)
-	// finally, we calculate the desired arg = psi_i(big) + small
-
-	const aleph = Ordinal.aleph(m.card.succ())
-	const lastLog = m.arg.getLast().omegaLog()
-	const [resIndex, _, exp] = lastLog.divMod(aleph)
-	const split = exp.add(aleph).omegaPow()
-	const [big, small] = m.arg.split(split)
-	const divSmall = small.divideLeftPow(exp)
-	/*
-	console.log("---------------------------")
-	console.log(""+this)
-	console.log("aleph: "+aleph)
-	console.log("lastLog: "+lastLog)
-	console.log("resIndex: "+resIndex)
-	console.log("exp: "+exp)
-	console.log("split: "+split)
-	console.log("big, small: "+big+", "+small)
-	console.log("divSmall: "+divSmall)
-	*/
-	const bigPsi = Ordinal.psiRaw(m.card, big)
-	var resArg; //  = Ordinal.psiRaw(m.card, big).add(divSmall).subLeft(Ordinal.two)
-	if (m.card.isZero() && big.isZero()) {
-	    resArg = divSmall.subLeft(Ordinal.one)
-	}
-	else if (resIndex.card().cmp(m.card) > 0)
-	    resArg = bigPsi.add(divSmall).subLeft(Ordinal.two)
-	else switch (resIndex.cmp(bigPsi)) {
-	    case 0: resArg = divSmall; break
-	    case 1: resArg = divSmall.subLeft(Ordinal.one); break
-	    case -1: resArg = bigPsi.add(divSmall).subLeft(Ordinal.two); break
-	}
-	// resArg = bigPsi.add(divSmall).subLeft(Ordinal.two)
-
-	// console.log("resIndex, resArg: "+resIndex+", "+resArg)
-
-	return [resIndex, resArg]
-    }
-
-    // tries to decompose into a call of a (generalized) veblen function
-    // returns a list of
-    //   {arg_index, arg}, where arg_indices come in a decreasing order
-    // if the only arg_indices are (1,0), then it is the ordinary veblen functionz8
-    // if not possible (either a sum, or the last index would equal this), returns null
-    veblenDecompose() {
-	const veblenCollapse = this.veblenCollapseDecompose()
-	if (veblenCollapse === null) return null
-	const [indexCollapse, argPhi] = veblenCollapse
-	const card1 = this.card().succ()
-	const aleph = Ordinal.aleph(card1)
-	// index >= Omega ^ Omega
-	if (indexCollapse.cmp(Ordinal.psiRaw(card1, Ordinal.psiRaw(card1, aleph))) >= 0)
-	    return null
-	// we need to decompose indexCollapse as a polynomial
-	// Omega^e0 * c0 + Omega^e1 * c1 + ... Omega^0 * c0
+    // assumes root is a positive power of omega, decomposes this into a sum root^a_i * b_i where b_i < root
+    polynomialDecompose(root) {
+	const logRoot = root.omegaLog()
 	const res = []
 	var lastExp = null
 	var coefMonoms = []
 	function storeRes() {
 	    res.push([
-		Ordinal.one.add(lastExp),
+		lastExp,
 		new Ordinal(coefMonoms),
 	    ])
 	    lastExp = exp
 	    coefMonoms = []
 	}
-	for (const monom of indexCollapse.m) {
+	for (const monom of this.m) {
 	    const ordMonom = Ordinal.fromMonom(monom) // mul constant = 1, to be able to take omegaLog
 	    var exp, coef
-	    if (ordMonom.cmp(aleph) < 0) {
+	    if (ordMonom.cmp(root) < 0) {
 		exp = Ordinal.zero
 		coef = monom
 	    }
 	    else {
-		const divMod = ordMonom.omegaLog().divMod(aleph)
+		const divMod = ordMonom.omegaLog().divMod(logRoot)
 		exp = divMod[0]
 		coef = { ...divMod[1].omegaPow().firstM(), "mul": monom.mul }
 	    }
@@ -734,11 +672,106 @@ class Ordinal {
 	    coefMonoms.push(coef)
 	}
 	if (lastExp !== null) storeRes()
-	if (!argPhi.isZero()) res.push([
-	    Ordinal.zero,
-	    argPhi,
-	])
-	return res
+	return res	
+    }
+
+    //  Veblen Hierarchy
+    //------------------------
+
+    // tries to decompose into a call of a (generalized) veblen function
+    // returns a list of
+    //   {arg_index, arg}, where arg_indices come in a decreasing order
+    // if the only arg_indices are (1,0), then it is the ordinary veblen functionz8
+    // if not possible (either a sum, or the last index would equal this), returns null
+    veblenDecompose() {
+	if (this.m.length != 1) return null
+	const m = this.m[0]
+	if (m.mul != 1) return null
+	if (m.arg.isZero() && !m.card.isZero()) return null
+
+	// index = 0 is just the omega logarithm
+	if ((m.card.isZero() && m.arg.isZero()) ||
+	    m.arg.lastM().card.cmp(m.card) <= 0) return [[Ordinal.zero, this.omegaLog()]]
+
+	const card1 = this.card().succ()
+	const aleph = Ordinal.aleph(card1)
+
+	// First, we find the biggest x such that aleph^x can be factored out
+	// from m.arg, we call the x: indexPoly
+
+	const lastLog = m.arg.getLast().omegaLog()
+	const [indexPoly, _, exp] = lastLog.divMod(aleph)
+	const split = exp.add(aleph).omegaPow()
+	const [big, small] = m.arg.split(split)
+	const divSmall = small.divideLeftPow(exp)
+
+	// and split m.arg into aleph ^ (indexPoly+1) * ? + aleph ^ indexPoly * divSmall
+	//                      \-------   big   -------/   \-------   small   --------/
+
+	// we cover the veblen decomposition up to indexPoly = aleph ^ aleph,
+	// so return null if bigger.
+	if (indexPoly.cmp(Ordinal.psiRaw(card1, Ordinal.psiRaw(card1, aleph))) >= 0)
+	    return null
+
+	// Otherwise, we can decompose it
+	// into a polynomial with small (at most same cardinality as this)
+	// exponents and coefficients of base "aleph"
+	const poly = indexPoly.polynomialDecompose(Ordinal.aleph(card1))
+
+	// mainArg -- the argument enumerating the fixed points will be one of
+	// * divSmall
+	// * divSmall.subLeft(1)
+	// * psi_card(big) + divSmall
+
+	// depending roughly on whether the "big" was needed to build the indices
+	const bigPsi = Ordinal.psiRaw(m.card, big)
+	var useBig = true
+	if (m.card.isZero() && big.isZero())
+	    useBig = false
+	else
+	    for (const [exp, mul] of poly)
+		if (exp.cmp(bigPsi) >= 0 || mul.cmp(bigPsi) >= 0) {
+		    useBig = false
+		    break
+		}
+
+	var mainArg
+	if (useBig)
+	    mainArg = bigPsi.add(divSmall)
+	else {
+	    var startOne = false
+	    // we add one in case the last argument is too big
+	    if (poly.length > 0 && (!big.isZero() || !m.card.isZero())) {
+		const [exp, mul] = poly[poly.length - 1]
+		// console.log("mul: "+mul)
+		// console.log("bigPsi: "+bigPsi)
+		if (mul.cmp(bigPsi) == 0) startOne = true
+	    }
+	    // console.log("startOne: "+startOne)
+	    if (startOne)
+		mainArg = divSmall
+	    else
+		mainArg = divSmall.subLeft(Ordinal.one)
+	}
+
+	// shift the coefficients by one, and append mainArg at the end
+	for (var expMul of poly) {
+	    if (expMul[0].isFinite())
+		expMul[0] = expMul[0].succ()
+	}
+	if (!mainArg.isZero())
+	    poly.push([Ordinal.zero, mainArg])
+	return poly
+    }
+
+    showVeblenDecompose() {
+	console.log("Veblen decomposition:")
+	const veblen = this.veblenDecompose()
+	console.log(veblen)
+	if (veblen !== null)
+	    for (const x of veblen) {
+		console.log(""+x[0]+": "+x[1])
+	    }
     }
 
     // TODO, bug: doesn't work on phi(1,1,psi0(omega2))
