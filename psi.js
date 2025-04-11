@@ -746,6 +746,8 @@ class Ordinal {
 		// console.log("mul: "+mul)
 		// console.log("bigPsi: "+bigPsi)
 		if (mul.cmp(bigPsi) == 0) startOne = true
+		else if (poly.length == 1 && mul.isOne() && exp.cmp(bigPsi) == 0)
+		    startOne = true
 	    }
 	    // console.log("startOne: "+startOne)
 	    if (startOne)
